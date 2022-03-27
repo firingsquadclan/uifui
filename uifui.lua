@@ -86,6 +86,12 @@ function sampev.onTextDrawSetString(id, text)
 		notificationText = s1 .. " - " .. s2 .. " (" .. time .. ")"
 		return true
 	end
+	
+	local s1, s2, time = string.match(text, "~b~~h~(.*)~w~[+-]~r~~h~(.*) ~n~~w~(.*)")
+	if s1 and s2 and time then
+		notificationText = s1 .. " - " .. s2 .. " (" .. time .. ")"
+		return true
+	end
 
 	local time = string.match(text, "%d+:%d+")
 	if time then
@@ -298,11 +304,11 @@ function renderNotification()
 	end
 end
 
-
 function renderText(font, text, resX, resY, color)
 	if color == nil then
 		color = 0xFFFFFFFF
 	end
+	
 	if font then
 		renderFontDrawText(font, text, resX+2, resY, 0xFF000000)
 		renderFontDrawText(font, text, resX-2, resY, 0xFF000000)
