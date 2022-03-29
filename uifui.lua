@@ -120,6 +120,8 @@ function sampev.onShowTextDraw(textdrawId, data)
 	if data.text == "SELECT" or data.text == "LD_BEAT:right" or data.text == "LD_BEAT:left" or data.text == "Terrorists" or data.text == "Police" or data.text == "FBI" or data.text == "Robbers" or data.text == "Cops" then
 		return true
 	end
+	
+	if textdrawId >= 2050 and textdrawId <= 2075 then return true end
 
 	if killtextdraw then
 		local player, dmg = string.match(data.text, "~g~(.*)~n~~w~(.*) ")
