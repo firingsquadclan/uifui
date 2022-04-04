@@ -58,8 +58,10 @@ end
 
 function sampev.onServerMessage(color, message)
 	print("MSG: color: ".. color .. " message: " .. message)
-	if string.find(message, "MOST WANTED:") == 1 or string.find(message, "DUEL:") == 1 or string.find(message, "FIGHT:") == 1 then
-		return false
+	if color == 16711935 then
+		if string.find(message, "MOST WANTED:") == 1 or string.find(message, "FIGHT:") == 1 then
+			return false
+		end
 	end
 
 	if color == 16777215 then
