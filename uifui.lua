@@ -59,11 +59,11 @@ end
 function sampev.onServerMessage(color, message)
 	print("MSG: color: ".. color .. " message: " .. message)
 	if color == 16711935 then
-		if string.find(message, "MOST WANTED:") == 1 or string.find(message, "DUEL:") == 1 or string.find(message, "FIGHT:") == 1 then
+		if string.find(message, "MOST WANTED:") == 1 or string.find(message, "FIGHT:") == 1 then
 			return false
 		end
 	end
-	
+
 	if color == 16777215 then
 		if string.match(message, "%* %[(.*)%]") then 
 			return true
@@ -92,13 +92,13 @@ function sampev.onTextDrawSetString(id, text)
 
 	local s1, s2, time = string.match(text, "~r~~h~(.*)~w~[+-]~b~~h~(.*) ~n~~w~(.*)")
 	if s1 and s2 and time then
-		notificationText = s1 .. " - " .. s2 .. " (" .. time .. ")"
+		notificationText = "Attackers " .. s1 .. " - " .. s2 .. " Defenders (" .. time .. ")"
 		return true
 	end
 	
 	local s1, s2, time = string.match(text, "~b~~h~(.*)~w~[+-]~r~~h~(.*) ~n~~w~(.*)")
 	if s1 and s2 and time then
-		notificationText = s1 .. " - " .. s2 .. " (" .. time .. ")"
+		notificationText = "Defenders " .. s1 .. " - " .. s2 .. " Attackers (" .. time .. ")"
 		return true
 	end
 
@@ -273,8 +273,16 @@ function renderNotification()
 					elseif afk then state = "AFK"
 					else state = hp end
 					
-					local string = name.. "(" .. id .. ")" .. " - " .. "(" .. state .. ")"
-					if am ~= 0 and hp <= 100 and hp ~= 0 then string = name.. "(" .. id .. ")" .. " - " .."(" .. hp .. " - " .. am .. ")" end
+					local string = ""
+                    if isCharInAnyCar(peds[i]) then
+                        local car = storeCarCharIsInNoSave(peds[i])
+                        local carhp = getCarHealth(car)
+						if carhp > 9999 then state = "GOD"
+						elseif afk then state = "AFK"
+						else state = carhp end
+						string = "(Vehicle) - " .. name.. "(" .. id .. ")" .. " - " .. "(" .. state .. ")"
+					elseif am ~= 0 and hp <= 100 and hp ~= 0 then string = name.. "(" .. id .. ")" .. " - " .."(" .. hp .. " - " .. am .. ")"
+					else string = name.. "(" .. id .. ")" .. " - " .. "(" .. state .. ")" end
 					local length = renderGetFontDrawTextLength(font, string)
 					local clr = sampGetPlayerColor(id)
 					local updated_color = bit.bor(bit.band(sampGetPlayerColor(id), 0x00ffffff), 0xFF000000)
@@ -301,8 +309,16 @@ function renderNotification()
 					elseif afk then state = "AFK"
 					else state = hp end
 					
-					local string = name.. "(" .. id .. ")" .. " - " .. "(" .. state .. ")"
-					if am ~= 0 and hp <= 100 and hp ~= 0 then string = name.. "(" .. id .. ")" .. " - " .."(" .. hp .. " - " .. am .. ")" end
+					local string = ""
+                    if isCharInAnyCar(peds[i]) then
+                        local car = storeCarCharIsInNoSave(peds[i])
+                        local carhp = getCarHealth(car)
+						if carhp > 9999 then state = "GOD"
+						elseif afk then state = "AFK"
+						else state = carhp end
+						string = "(Vehicle) - " .. name.. "(" .. id .. ")" .. " - " .. "(" .. state .. ")"
+					elseif am ~= 0 and hp <= 100 and hp ~= 0 then string = name.. "(" .. id .. ")" .. " - " .."(" .. hp .. " - " .. am .. ")"
+					else string = name.. "(" .. id .. ")" .. " - " .. "(" .. state .. ")" end
 					local length = renderGetFontDrawTextLength(font, string)
 					local clr = sampGetPlayerColor(id)
 					local updated_color = bit.bor(bit.band(sampGetPlayerColor(id), 0x00ffffff), 0xFF000000)
