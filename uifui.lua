@@ -90,6 +90,8 @@ function sampev.onTextDrawSetString(id, text)
 		return false
 	end
 
+	--GZ GWAR
+
 	local s1, s2, time = string.match(text, "~r~~h~(.*)~w~[+-]~b~~h~(.*) ~n~~w~(.*)")
 	if s1 and s2 and time then
 		notificationText = "Attackers " .. s1 .. " - " .. s2 .. " Defenders (" .. time .. ")"
@@ -97,6 +99,20 @@ function sampev.onTextDrawSetString(id, text)
 	end
 	
 	local s1, s2, time = string.match(text, "~b~~h~(.*)~w~[+-]~r~~h~(.*) ~n~~w~(.*)")
+	if s1 and s2 and time then
+		notificationText = "Defenders " .. s1 .. " - " .. s2 .. " Attackers (" .. time .. ")"
+		return true
+	end
+
+	--DERBY
+
+	local s1, s2, time = string.match(text, "~r~~h~(.*)~w~[+-]~b~~h~(.*) ~n~(.*)")
+	if s1 and s2 and time then
+		notificationText = "Attackers " .. s1 .. " - " .. s2 .. " Defenders (" .. time .. ")"
+		return true
+	end
+
+	local s1, s2, time = string.match(text, "~b~~h~(.*)~w~[+-]~r~~h~(.*) ~n~(.*)")
 	if s1 and s2 and time then
 		notificationText = "Defenders " .. s1 .. " - " .. s2 .. " Attackers (" .. time .. ")"
 		return true
