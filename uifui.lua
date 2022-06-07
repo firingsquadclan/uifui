@@ -6,10 +6,12 @@ script_description("github.com/firingsquadclan/uifui")
 local sampev = require "lib.samp.events"
 local raknet = require "lib.samp.raknet"
 local ev     = require "lib.samp.events.core"
+local vk     = require "vkeys"
 
 local killtextdraw = true
 local killgametext = true
 local autogz = false
+local holdkey = false
 local font = nil
 
 function main()
@@ -20,6 +22,7 @@ function main()
 	sampRegisterChatCommand("toggletd", func_toggletd)
 	sampRegisterChatCommand("togglegametext", func_togglegametext)
 	sampRegisterChatCommand("toggleautogz", func_toggleautogz)
+	sampRegisterChatCommand("togglef10", func_togglef10)
 
 	local ip, port = sampGetCurrentServerAddress()
 
@@ -30,6 +33,11 @@ function main()
 	lua_thread.create(renderNotification)
 
 	wait(-1)
+end
+
+function func_togglef10(arg)
+	holdkey = not holdkey
+	setVirtualKeyDown(vk.VK_F10, holdkey)
 end
 
 function func_toggletd(arg)
