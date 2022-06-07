@@ -9,6 +9,7 @@ local ev     = require "lib.samp.events.core"
 
 local killtextdraw = true
 local killgametext = true
+local autogz = false
 local font = nil
 
 function main()
@@ -18,6 +19,7 @@ function main()
 
 	sampRegisterChatCommand("toggletd", func_toggletd)
 	sampRegisterChatCommand("togglegametext", func_togglegametext)
+	sampRegisterChatCommand("toggleautogz", func_toggleautogz)
 
 	local ip, port = sampGetCurrentServerAddress()
 
@@ -40,6 +42,11 @@ function func_togglegametext(arg)
 	sampAddChatMessage("gametext toggled", 0xFFFFFFFF)
 end
 
+function func_toggleautogz(arg)
+	autogz = not autogz
+	sampAddChatMessage("autogz toggled", 0xFFFFFFFF)
+end
+
 local notificationText = "UIF UI 2.1 - Vektor, TwisT3R"
 function sampev.onDisplayGameText(style, time, text)
 	print("GAMETEXT: style " .. style .. " time " .. time .. " text" .. text)
@@ -53,6 +60,11 @@ function sampev.onDisplayGameText(style, time, text)
 			notificationText = text
 		end
 		return false
+	end
+	if autogz then
+		if string.find(text, "Zone: '# %d+'.  Type /gz2 to join.") then
+			sampSendChat("/gz2")
+		end
 	end
 end
 
