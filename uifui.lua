@@ -8,17 +8,23 @@ local sampev = require "lib.samp.events"
 local raknet = require "lib.samp.raknet"
 local ev     = require "lib.samp.events.core"
 local vk     = require "vkeys"
+local memory = require "memory"
 
-local uifuiversion = "2.2.1.5"
+local uifuiversion = "2.2.42"
 local versiontext = "UIF UI " .. uifuiversion .. " - Vektor, TwisT3R - github.com/firingsquadclan/uifui"
 
 local killtextdraw = true
 local killgametext = true
 local autogz = false
+local deathmessages = true
+local nearbyplayers = true
 local holdkey = false
 local font = nil
+local fpsvisible = true
+local fps = {cur = 0, tick = 0}
 
 function main()
+
 	if not isSampLoaded() or not isSampfuncsLoaded() then error("SA:MP and SAMPFUNCS required!") end
 
 	while not isSampAvailable() do wait(0) end
@@ -27,6 +33,9 @@ function main()
 	sampRegisterChatCommand("togglegametext", func_togglegametext)
 	sampRegisterChatCommand("toggleautogz", func_toggleautogz)
 	sampRegisterChatCommand("togglef10", func_togglef10)
+	sampRegisterChatCommand("toggledeathmessages", func_toggledeathmessages)
+	sampRegisterChatCommand("togglenearbyplayers", func_togglenearbyplayers)
+	sampRegisterChatCommand("togglefps", func_togglefps)
 
 	local ip, port = sampGetCurrentServerAddress()
 
@@ -36,6 +45,17 @@ function main()
 
 	lua_thread.create(renderNotification)
 	sampAddChatMessage(versiontext, -1)
+
+	while true do
+		repeat wait(0) until sampIsLocalPlayerSpawned()
+	
+		local time = os.clock() * 1000
+		if time - fps.tick > 1000 then
+			fps.cur = memory.getfloat(0xB7CB50, 4, false)
+			fps.tick = os.clock() * 1000
+		end
+
+	end
 
 	wait(-1)
 end
@@ -47,17 +67,32 @@ end
 
 function func_toggletd(arg)
 	killtextdraw = not killtextdraw
-	sampAddChatMessage("textdraws toggled", 0xFFFFFFFF)
+	sampAddChatMessage("textdraws " .. (killtextdraw and "off" or "on"), 0xFFFFFFFF)
 end
 
 function func_togglegametext(arg)
 	killgametext = not killgametext
-	sampAddChatMessage("gametext toggled", 0xFFFFFFFF)
+	sampAddChatMessage("gametext " .. (killgametext and "off" or "on"), 0xFFFFFFFF)
 end
 
 function func_toggleautogz(arg)
 	autogz = not autogz
-	sampAddChatMessage("autogz toggled", 0xFFFFFFFF)
+	sampAddChatMessage("autogz " .. (autogz and "on" or "off"), 0xFFFFFFFF)
+end
+
+function func_toggledeathmessages(arg)
+	deathmessages = not deathmessages
+	sampAddChatMessage("death list " .. (deathmessages and "local" or "global"), 0xFFFFFFFF)
+end
+
+function func_togglenearbyplayers(arg)
+	nearbyplayers = not nearbyplayers
+	sampAddChatMessage("nearby players text " .. (nearbyplayers and "visible" or "invisible"), 0xFFFFFFFF)
+end
+
+function func_togglefps(arg)
+	fpsvisible = not fpsvisible
+	sampAddChatMessage("fps " .. (fpsvisible and "visible" or "invisible"), 0xFFFFFFFF)
 end
 
 local notificationText = versiontext
@@ -212,10 +247,12 @@ function sampev.onPlayerDeathNotification(killerid, killedid, reason)
 			setKillText("Killed by " .. name)
 		end
 	end
-	if isPlayerNear(killerid, killedid) then
-		return true
+	if deathmessages then 
+		if isPlayerNear(killerid, killedid) then return true
+		else return false
+		end
 	end
-	return false
+	return true
 end
 
 local damageTime = 0
@@ -284,6 +321,10 @@ function isPlayerNear(p1, p2)
 	return false
 end
 
+function round(x)
+	return x>=0 and math.floor(x+0.5) or math.ceil(x-0.5)
+  end
+
 function renderNotification()
 	local resX, resY = getScreenResolution()
 	while true do
@@ -295,6 +336,10 @@ function renderNotification()
 
 		local scorelen = renderGetFontDrawTextLength(font, scoretext)
 		renderText(font, scoretext, resX - scorelen - 5, 5)
+
+		local fpstext = "FPS: " .. round(fps.cur)
+		local fpslen = renderGetFontDrawTextLength(font, fpstext)
+		if fpsvisible then renderText(font, fpstext, resX - fpslen - 5, 25) end
 
 		local peds = getAllChars()
 		local p = 0
@@ -327,7 +372,7 @@ function renderNotification()
 					local length = renderGetFontDrawTextLength(font, string)
 					local clr = sampGetPlayerColor(id)
 					local updated_color = bit.bor(bit.band(sampGetPlayerColor(id), 0x00ffffff), 0xFF000000)
-					renderText(font, string, (resX-length-4), (resY-height-2)-(p*height)-2, updated_color)
+					if nearbyplayers then renderText(font, string, (resX-length-4), (resY-height-2)-(p*height)-2, updated_color) end
 					p = p+1
 				end
 			end
@@ -363,7 +408,7 @@ function renderNotification()
 					local length = renderGetFontDrawTextLength(font, string)
 					local clr = sampGetPlayerColor(id)
 					local updated_color = bit.bor(bit.band(sampGetPlayerColor(id), 0x00ffffff), 0xFF000000)
-					renderText(font, string, (resX-length-4), (resY-height-2)-(p*height)-2, updated_color)
+					if nearbyplayers then renderText(font, string, (resX-length-4), (resY-height-2)-(p*height)-2, updated_color) end
 					p = p+1
 				end
 			end
