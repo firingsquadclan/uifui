@@ -1,5 +1,5 @@
 script_name("UIF UI")
-script_version_number(2.1)
+script_version_number(2.2)
 script_moonloader(023)
 script_author("Vektor & TwisT3R")
 script_description("github.com/firingsquadclan/uifui")
@@ -55,7 +55,7 @@ function func_toggleautogz(arg)
 	sampAddChatMessage("autogz toggled", 0xFFFFFFFF)
 end
 
-local notificationText = "UIF UI 2.1 - Vektor, TwisT3R"
+local notificationText = "UIF UI 2.2 - Vektor, TwisT3R"
 function sampev.onDisplayGameText(style, time, text)
 	print("GAMETEXT: style " .. style .. " time " .. time .. " text" .. text)
 	if killgametext then
@@ -84,12 +84,12 @@ function sampev.onServerMessage(color, message)
 		end
 	end
 
-	if color == 16777215 then
-		if string.match(message, "%* %[(.*)%]") then 
-			return true
-			else return false
-		end
-	end
+	--if color == 16777215 then
+		--if string.match(message, "%* %[(.*)%]") or string.match(message, "(.*) %(.*)%:") then 
+			--return true
+			--else return false
+		--end
+	--end
 end
 
 --~g~PT Score ~w~316  ~g~FR Score ~w~14,423  ~g~DM Score ~w~2607  ~g~Race Score ~w~0  ~g~Derby Score ~w~135~n~~g~Fall Score ~w~0  ~g~Duel Score ~w~825  ~g~PTP Score ~w~212  ~g~CNR Score ~w~0  ~g~Group Score ~w~535,753
