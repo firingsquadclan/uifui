@@ -1,12 +1,16 @@
 script_name("UIF UI")
-script_version_number(2.2)
+script_version_number(2)
 script_moonloader(023)
 script_author("Vektor & TwisT3R")
 script_description("github.com/firingsquadclan/uifui")
+
 local sampev = require "lib.samp.events"
 local raknet = require "lib.samp.raknet"
 local ev     = require "lib.samp.events.core"
 local vk     = require "vkeys"
+
+local uifuiversion = "2.2.1.5"
+local versiontext = "UIF UI " .. uifuiversion .. " - Vektor, TwisT3R - github.com/firingsquadclan/uifui"
 
 local killtextdraw = true
 local killgametext = true
@@ -31,6 +35,7 @@ function main()
 	font = renderCreateFont("Arial", 10, 1)
 
 	lua_thread.create(renderNotification)
+	sampAddChatMessage(versiontext, -1)
 
 	wait(-1)
 end
@@ -55,7 +60,7 @@ function func_toggleautogz(arg)
 	sampAddChatMessage("autogz toggled", 0xFFFFFFFF)
 end
 
-local notificationText = "UIF UI 2.2 - Vektor, TwisT3R"
+local notificationText = versiontext
 function sampev.onDisplayGameText(style, time, text)
 	print("GAMETEXT: style " .. style .. " time " .. time .. " text" .. text)
 	if killgametext then
