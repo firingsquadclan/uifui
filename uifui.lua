@@ -10,7 +10,7 @@ local ev     = require "lib.samp.events.core"
 local vk     = require "vkeys"
 local memory = require "memory"
 
-local uifuiversion = "2.2.42"
+local uifuiversion = "2.2.45"
 local versiontext = "UIF UI " .. uifuiversion .. " - Vektor, TwisT3R - github.com/firingsquadclan/uifui"
 
 local killtextdraw = true
@@ -133,7 +133,7 @@ function sampev.onServerMessage(color, message)
 end
 
 --~g~PT Score ~w~316  ~g~FR Score ~w~14,423  ~g~DM Score ~w~2607  ~g~Race Score ~w~0  ~g~Derby Score ~w~135~n~~g~Fall Score ~w~0  ~g~Duel Score ~w~825  ~g~PTP Score ~w~212  ~g~CNR Score ~w~0  ~g~Group Score ~w~535,753
-
+--~g~PT Score ~w~3265  ~g~PTP Score ~w~7258  ~g~PTP Level ~w~8 / 25  ~g~Score Until Next Level ~w~242
 local scoretext = ""
 
 local ptptime = "00:00"
@@ -141,7 +141,7 @@ local ptptime = "00:00"
 function sampev.onTextDrawSetString(id, text)
 	print("TEXTDRAW: ID: " .. id .." TEXT: ".. text)
 
-	if string.find(text, "  ~g~Duel Score ~w~") then
+	if string.find(text, "  ~g~Duel Score ~w~") or string.find(text, " ~g~PTP Level ~w~") then
 		text = text:gsub('~g~', '')
 		text = text:gsub('~n~', '  ')
 		text = text:gsub(' ~w~', ': ')
