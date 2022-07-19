@@ -10,7 +10,7 @@ local ev     = require "lib.samp.events.core"
 local vk     = require "vkeys"
 local memory = require "memory"
 
-local uifuiversion = "2.2.45"
+local uifuiversion = "2.2.48"
 local versiontext = "UIF UI " .. uifuiversion .. " - Vektor, TwisT3R - github.com/firingsquadclan/uifui"
 
 local killtextdraw = true
@@ -135,6 +135,7 @@ end
 --~g~PT Score ~w~316  ~g~FR Score ~w~14,423  ~g~DM Score ~w~2607  ~g~Race Score ~w~0  ~g~Derby Score ~w~135~n~~g~Fall Score ~w~0  ~g~Duel Score ~w~825  ~g~PTP Score ~w~212  ~g~CNR Score ~w~0  ~g~Group Score ~w~535,753
 --~g~PT Score ~w~3265  ~g~PTP Score ~w~7258  ~g~PTP Level ~w~8 / 25  ~g~Score Until Next Level ~w~242
 local scoretext = ""
+local scoretextc = " "
 
 local ptptime = "00:00"
 
@@ -147,6 +148,7 @@ function sampev.onTextDrawSetString(id, text)
 		text = text:gsub(' ~w~', ': ')
 
 		scoretext = text
+		scoretextc = text
 		return false
 	end
 
@@ -339,7 +341,12 @@ function renderNotification()
 
 		local fpstext = "FPS: " .. round(fps.cur)
 		local fpslen = renderGetFontDrawTextLength(font, fpstext)
-		if fpsvisible then renderText(font, fpstext, resX - fpslen - 5, 25) end
+		local altertext = 0
+		if fpsvisible then
+			if scoretext == scoretextc then altertext = 25
+			elseif scoretext == "" then altertext = 5 end
+			renderText(font, fpstext, resX - fpslen - 5, altertext)
+		end
 
 		local peds = getAllChars()
 		local p = 0
