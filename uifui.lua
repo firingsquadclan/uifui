@@ -9,18 +9,34 @@ local raknet = require "lib.samp.raknet"
 local ev     = require "lib.samp.events.core"
 local vk     = require "vkeys"
 local memory = require "memory"
+local inicfg = require 'inicfg'
 
-local uifuiversion = "2.2.48"
+local uifuiversion = "2.2.49"
 local versiontext = "UIF UI " .. uifuiversion .. " - Vektor, TwisT3R - github.com/firingsquadclan/uifui"
 
-local killtextdraw = true
-local killgametext = true
-local autogz = false
-local deathmessages = true
-local nearbyplayers = true
-local holdkey = false
+local settings = {
+	main = {
+		killtextdraw = true,
+		killgametext = true,
+		autogz = false,
+		deathmessages = true,
+		nearbyplayers = true,
+		holdkey = false,
+		fpsvisible = true
+	}
+}
+
+local killtextdraw = settings.main.killtextdraw
+local killgametext = settings.main.killgametext
+local autogz = settings.main.autogz
+local deathmessages = settings.main.deathmessages
+local nearbyplayers = settings.main.nearbyplayers
+local holdkey = settings.main.holdkey
+local fpsvisible = settings.main.fpsvisible
+
+settings = inicfg.load(settings)
+
 local font = nil
-local fpsvisible = true
 local fps = {cur = 0, tick = 0}
 
 function main()
@@ -39,7 +55,7 @@ function main()
 
 	local ip, port = sampGetCurrentServerAddress()
 
-	if ip ~= "play.uifserver.net" and ip ~= "51.254.85.134" then error("SERVER IS NOT UIF! UIF UI SCRIPT EXITED " .. ip) end
+	if ip ~= "play.uifserver.net" and ip ~= "51.254.85.134" then error("SERVER IS NOT UIF! UIF UI SCRIPT TERMINATED " .. ip) end
 
 	font = renderCreateFont("Arial", 10, 1)
 
@@ -48,13 +64,11 @@ function main()
 
 	while true do
 		repeat wait(0) until sampIsLocalPlayerSpawned()
-	
 		local time = os.clock() * 1000
 		if time - fps.tick > 1000 then
 			fps.cur = memory.getfloat(0xB7CB50, 4, false)
 			fps.tick = os.clock() * 1000
 		end
-
 	end
 
 	wait(-1)
@@ -66,39 +80,39 @@ function func_togglef10(arg)
 end
 
 function func_toggletd(arg)
-	killtextdraw = not killtextdraw
-	sampAddChatMessage("textdraws " .. (killtextdraw and "off" or "on"), 0xFFFFFFFF)
+	settings.main.killtextdraw = not settings.main.killtextdraw
+	sampAddChatMessage("textdraws " .. (settings.main.killtextdraw and "off" or "on"), 0xFFFFFFFF)
 end
 
 function func_togglegametext(arg)
-	killgametext = not killgametext
-	sampAddChatMessage("gametext " .. (killgametext and "off" or "on"), 0xFFFFFFFF)
+	settings.main.killgametext = not settings.main.killgametext
+	sampAddChatMessage("gametext " .. (settings.main.killgametext and "off" or "on"), 0xFFFFFFFF)
 end
 
 function func_toggleautogz(arg)
-	autogz = not autogz
-	sampAddChatMessage("autogz " .. (autogz and "on" or "off"), 0xFFFFFFFF)
+	settings.main.autogz = not settings.main.autogz
+	sampAddChatMessage("autogz " .. (settings.main.autogz and "on" or "off"), 0xFFFFFFFF)
 end
 
 function func_toggledeathmessages(arg)
-	deathmessages = not deathmessages
-	sampAddChatMessage("death list " .. (deathmessages and "local" or "global"), 0xFFFFFFFF)
+	settings.main.deathmessages = not settings.main.deathmessages
+	sampAddChatMessage("death list " .. (settings.main.deathmessages and "local" or "global"), 0xFFFFFFFF)
 end
 
 function func_togglenearbyplayers(arg)
-	nearbyplayers = not nearbyplayers
-	sampAddChatMessage("nearby players text " .. (nearbyplayers and "visible" or "invisible"), 0xFFFFFFFF)
+	settings.main.nearbyplayers = not settings.main.nearbyplayers
+	sampAddChatMessage("nearby players text " .. (settings.main.nearbyplayers and "visible" or "invisible"), 0xFFFFFFFF)
 end
 
 function func_togglefps(arg)
-	fpsvisible = not fpsvisible
-	sampAddChatMessage("fps " .. (fpsvisible and "visible" or "invisible"), 0xFFFFFFFF)
+	settings.main.fpsvisible = not settings.main.fpsvisible
+	sampAddChatMessage("fps " .. (settings.main.fpsvisible and "visible" or "invisible"), 0xFFFFFFFF)
 end
 
 local notificationText = versiontext
 function sampev.onDisplayGameText(style, time, text)
 	print("GAMETEXT: style " .. style .. " time " .. time .. " text" .. text)
-	if killgametext then
+	if settings.main.killgametext then
 		if not string.find(string.lower(text),"event") and not string.find(string.lower(text),"killed") and not string.find(string.lower(text),"type") and not string.find(string.lower(text),"global war") then
 			text = string.gsub(text, "~%a~", " ")
 			if string.find(text, "This zone can be attacked") then
@@ -210,7 +224,7 @@ function sampev.onShowTextDraw(textdrawId, data)
 	
 	if textdrawId >= 2050 and textdrawId <= 2075 then return true end
 
-	if killtextdraw then
+	if settings.main.killtextdraw then
 		local player, dmg = string.match(data.text, "~g~(.*)~n~~w~(.*) ")
     	if player ~= nil and dmg ~= nil and player ~= "President" then
 			addDamage(player,dmg)
@@ -249,7 +263,7 @@ function sampev.onPlayerDeathNotification(killerid, killedid, reason)
 			setKillText("Killed by " .. name)
 		end
 	end
-	if deathmessages then 
+	if settings.main.deathmessages then 
 		if isPlayerNear(killerid, killedid) then return true
 		else return false
 		end
@@ -342,7 +356,7 @@ function renderNotification()
 		local fpstext = "FPS: " .. round(fps.cur)
 		local fpslen = renderGetFontDrawTextLength(font, fpstext)
 		local altertext = 0
-		if fpsvisible then
+		if settings.main.fpsvisible then
 			if scoretext == scoretextc then altertext = 25
 			elseif scoretext == "" then altertext = 5 end
 			renderText(font, fpstext, resX - fpslen - 5, altertext)
@@ -379,7 +393,7 @@ function renderNotification()
 					local length = renderGetFontDrawTextLength(font, string)
 					local clr = sampGetPlayerColor(id)
 					local updated_color = bit.bor(bit.band(sampGetPlayerColor(id), 0x00ffffff), 0xFF000000)
-					if nearbyplayers then renderText(font, string, (resX-length-4), (resY-height-2)-(p*height)-2, updated_color) end
+					if settings.main.nearbyplayers then renderText(font, string, (resX-length-4), (resY-height-2)-(p*height)-2, updated_color) end
 					p = p+1
 				end
 			end
@@ -415,7 +429,7 @@ function renderNotification()
 					local length = renderGetFontDrawTextLength(font, string)
 					local clr = sampGetPlayerColor(id)
 					local updated_color = bit.bor(bit.band(sampGetPlayerColor(id), 0x00ffffff), 0xFF000000)
-					if nearbyplayers then renderText(font, string, (resX-length-4), (resY-height-2)-(p*height)-2, updated_color) end
+					if settings.main.nearbyplayers then renderText(font, string, (resX-length-4), (resY-height-2)-(p*height)-2, updated_color) end
 					p = p+1
 				end
 			end
@@ -439,5 +453,11 @@ function renderText(font, text, resX, resY, color)
 		renderFontDrawText(font, text, resX+1, resY-1, 0xFF000000)
 		renderFontDrawText(font, text, resX+1, resY+1, 0xFF000000)
 		renderFontDrawText(font, text, resX, resY, color)
+	end
+end
+
+function onScriptTerminate(script)
+	if script == thisScript() then
+        inicfg.save(settings)
 	end
 end
