@@ -11,8 +11,25 @@ local vk     = require "vkeys"
 local memory = require "memory"
 local inicfg = require 'inicfg'
 
-local uifuiversion = "2.2.49"
+local uifuiversion = "2.3.5"
 local versiontext = "UIF UI " .. uifuiversion .. " - Vektor, TwisT3R - github.com/firingsquadclan/uifui"
+
+local carnames = {"Landstalker", "Bravura", "Buffalo", "Linerunner", "Perrenial", "Sentinel", "Dumper", "Firetruck", "Trashmaster", "Stretch", "Manana", "Infernus",
+"Voodoo", "Pony", "Mule", "Cheetah", "Ambulance", "Leviathan", "Moonbeam", "Esperanto", "Taxi", "Washington", "Bobcat", "Whoopee", "BFInjection", "Hunter",
+"Premier", "Enforcer", "Securicar", "Banshee", "Predator", "Bus", "Rhino", "Barracks", "Hotknife", "Trailer", "Previon", "Coach", "Cabbie", "Stallion", "Rumpo",
+"RCBandit", "Romero","Packer", "Monster", "Admiral", "Squalo", "Seasparrow", "Pizzaboy", "Tram", "Trailer", "Turismo", "Speeder", "Reefer", "Tropic", "Flatbed",
+"Yankee", "Caddy", "Solair", "Berkley'sRCVan", "Skimmer", "PCJ-600", "Faggio", "Freeway", "RCBaron", "RCRaider", "Glendale", "Oceanic", "Sanchez", "Sparrow",
+"Patriot", "Quad", "Coastguard", "Dinghy", "Hermes", "Sabre", "Rustler", "ZR-350", "Walton", "Regina", "Comet", "BMX", "Burrito", "Camper", "Marquis", "Baggage",
+"Dozer", "Maverick", "NewsChopper", "Rancher", "FBIRancher", "Virgo", "Greenwood", "Jetmax", "Hotring", "Sandking", "BlistaCompact", "PoliceMaverick",
+"Boxvillde", "Benson", "Mesa", "RCGoblin", "HotringRacerA", "HotringRacerB", "BloodringBanger", "Rancher", "SuperGT", "Elegant", "Journey", "Bike",
+"MountainBike", "Beagle", "Cropduster", "Stunt", "Tanker", "Roadtrain", "Nebula", "Majestic", "Buccaneer", "Shamal", "hydra", "FCR-900", "NRG-500", "HPV1000",
+"CementTruck", "TowTruck", "Fortune", "Cadrona", "FBITruck", "Willard", "Forklift", "Tractor", "Combine", "Feltzer", "Remington", "Slamvan", "Blade", "Freight",
+"Streak", "Vortex", "Vincent", "Bullet", "Clover", "Sadler", "Firetruck", "Hustler", "Intruder", "Primo", "Cargobob", "Tampa", "Sunrise", "Merit", "Utility", "Nevada",
+"Yosemite", "Windsor", "Monster", "Monster", "Uranus", "Jester", "Sultan", "Stratum", "Elegy", "Raindance", "RCTiger", "Flash", "Tahoma", "Savanna", "Bandito",
+"FreightFlat", "StreakCarriage", "Kart", "Mower", "Dune", "Sweeper", "Broadway", "Tornado", "AT-400", "DFT-30", "Huntley", "Stafford", "BF-400", "NewsVan",
+"Tug", "Trailer", "Emperor", "Wayfarer", "Euros", "Hotdog", "Club", "FreightBox", "Trailer", "Andromada", "Dodo", "RCCam", "Launch", "PoliceCar", "PoliceCar",
+"PoliceCar", "PoliceRanger", "Picador", "S.W.A.T", "Alpha", "Phoenix", "GlendaleShit", "SadlerShit", "Luggage A", "Luggage B", "Stairs", "Boxville", "Tiller",
+"UtilityTrailer"}
 
 local settings = {
 	main = {
@@ -341,6 +358,19 @@ function round(x)
 	return x>=0 and math.floor(x+0.5) or math.ceil(x-0.5)
   end
 
+function getPlayerSeatId(playerid)
+	local result, ped = sampGetCharHandleBySampPlayerId(playerid)
+	if result and isCharInAnyCar(ped) then
+	  	local car = storeCarCharIsInNoSave(ped)
+	  	for i = 0, getMaximumNumberOfPassengers(car) do
+			if not isCarPassengerSeatFree(car, i) and getCharInCarPassengerSeat(car, i) == ped then
+		  	return i -- seat id
+			end
+	  	end
+	end
+	return nil
+end
+
 function renderNotification()
 	local resX, resY = getScreenResolution()
 	while true do
@@ -384,10 +414,15 @@ function renderNotification()
                     if isCharInAnyCar(peds[i]) then
                         local car = storeCarCharIsInNoSave(peds[i])
                         local carhp = getCarHealth(car)
+						local result1, carid = sampGetVehicleIdByCarHandle(car)
+						local carmodel = getCarModel(car)
+						local carname = carnames[carmodel - 399]
+						--local seatid = tostring(getPlayerSeatID(tonumber(pid)))
 						if carhp > 9999 then state = "GOD"
 						elseif afk then state = "AFK"
 						else state = carhp end
-						string = "(Vehicle) - " .. name.. "(" .. id .. ")" .. " - " .. "(" .. state .. ")"
+						--string = "(".. carname .. "(" .. seatid .. ")" .. " - " .. carid ..") - " .. name.. "(" .. id .. ")" .. " - " .. "(" .. state .. ")"
+						string = "(".. carname .. " - " .. carid ..") - " .. name.. "(" .. id .. ")" .. " - " .. "(" .. state .. ")"
 					elseif am ~= 0 and hp <= 100 and hp ~= 0 then string = name.. "(" .. id .. ")" .. " - " .."(" .. hp .. " - " .. am .. ")"
 					else string = name.. "(" .. id .. ")" .. " - " .. "(" .. state .. ")" end
 					local length = renderGetFontDrawTextLength(font, string)
@@ -420,10 +455,14 @@ function renderNotification()
                     if isCharInAnyCar(peds[i]) then
                         local car = storeCarCharIsInNoSave(peds[i])
                         local carhp = getCarHealth(car)
+						local result1, carid = sampGetVehicleIdByCarHandle(car)
+						local carmodel = getCarModel(car)
+						local carname = carnames[carmodel - 399]
+						--local seatid = tostring(getPlayerSeatID(tonumber(pid)))
 						if carhp > 9999 then state = "GOD"
 						elseif afk then state = "AFK"
 						else state = carhp end
-						string = "(Vehicle) - " .. name.. "(" .. id .. ")" .. " - " .. "(" .. state .. ")"
+						string = "(".. carname .. " - " .. carid ..") - " .. name.. "(" .. id .. ")" .. " - " .. "(" .. state .. ")"
 					elseif am ~= 0 and hp <= 100 and hp ~= 0 then string = name.. "(" .. id .. ")" .. " - " .."(" .. hp .. " - " .. am .. ")"
 					else string = name.. "(" .. id .. ")" .. " - " .. "(" .. state .. ")" end
 					local length = renderGetFontDrawTextLength(font, string)
