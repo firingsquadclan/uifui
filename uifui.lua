@@ -14,22 +14,25 @@ local inicfg = require 'inicfg'
 local uifuiversion = "2.3.5"
 local versiontext = "UIF UI " .. uifuiversion .. " - Vektor, TwisT3R - github.com/firingsquadclan/uifui"
 
-local carnames = {"Landstalker", "Bravura", "Buffalo", "Linerunner", "Perrenial", "Sentinel", "Dumper", "Firetruck", "Trashmaster", "Stretch", "Manana", "Infernus",
-"Voodoo", "Pony", "Mule", "Cheetah", "Ambulance", "Leviathan", "Moonbeam", "Esperanto", "Taxi", "Washington", "Bobcat", "Whoopee", "BFInjection", "Hunter",
-"Premier", "Enforcer", "Securicar", "Banshee", "Predator", "Bus", "Rhino", "Barracks", "Hotknife", "Trailer", "Previon", "Coach", "Cabbie", "Stallion", "Rumpo",
-"RCBandit", "Romero","Packer", "Monster", "Admiral", "Squalo", "Seasparrow", "Pizzaboy", "Tram", "Trailer", "Turismo", "Speeder", "Reefer", "Tropic", "Flatbed",
-"Yankee", "Caddy", "Solair", "Berkley'sRCVan", "Skimmer", "PCJ-600", "Faggio", "Freeway", "RCBaron", "RCRaider", "Glendale", "Oceanic", "Sanchez", "Sparrow",
-"Patriot", "Quad", "Coastguard", "Dinghy", "Hermes", "Sabre", "Rustler", "ZR-350", "Walton", "Regina", "Comet", "BMX", "Burrito", "Camper", "Marquis", "Baggage",
-"Dozer", "Maverick", "NewsChopper", "Rancher", "FBIRancher", "Virgo", "Greenwood", "Jetmax", "Hotring", "Sandking", "BlistaCompact", "PoliceMaverick",
-"Boxvillde", "Benson", "Mesa", "RCGoblin", "HotringRacerA", "HotringRacerB", "BloodringBanger", "Rancher", "SuperGT", "Elegant", "Journey", "Bike",
-"MountainBike", "Beagle", "Cropduster", "Stunt", "Tanker", "Roadtrain", "Nebula", "Majestic", "Buccaneer", "Shamal", "hydra", "FCR-900", "NRG-500", "HPV1000",
-"CementTruck", "TowTruck", "Fortune", "Cadrona", "FBITruck", "Willard", "Forklift", "Tractor", "Combine", "Feltzer", "Remington", "Slamvan", "Blade", "Freight",
-"Streak", "Vortex", "Vincent", "Bullet", "Clover", "Sadler", "Firetruck", "Hustler", "Intruder", "Primo", "Cargobob", "Tampa", "Sunrise", "Merit", "Utility", "Nevada",
-"Yosemite", "Windsor", "Monster", "Monster", "Uranus", "Jester", "Sultan", "Stratum", "Elegy", "Raindance", "RCTiger", "Flash", "Tahoma", "Savanna", "Bandito",
-"FreightFlat", "StreakCarriage", "Kart", "Mower", "Dune", "Sweeper", "Broadway", "Tornado", "AT-400", "DFT-30", "Huntley", "Stafford", "BF-400", "NewsVan",
-"Tug", "Trailer", "Emperor", "Wayfarer", "Euros", "Hotdog", "Club", "FreightBox", "Trailer", "Andromada", "Dodo", "RCCam", "Launch", "PoliceCar", "PoliceCar",
-"PoliceCar", "PoliceRanger", "Picador", "S.W.A.T", "Alpha", "Phoenix", "GlendaleShit", "SadlerShit", "Luggage A", "Luggage B", "Stairs", "Boxville", "Tiller",
-"UtilityTrailer"}
+local carnames = {"Landstalker", "Bravura", "Buffalo", "Linerunner", "Perennial", "Sentinel", "Dumper", "Fire Truck", "Trashmaster", "Stretch", "Manana", 
+	"Infernus", "Voodoo", "Pony", "Mule", "Cheetah", "Ambulance", "Leviathan", "Moonbeam", "Esperanto", "Taxi", "Washington", "Bobcat", 
+	"Mr. Whoopee", "BF Injection", "Hunter", "Premier", "Enforcer", "Securicar", "Banshee", "Predator", "Bus", "Rhino", "Barracks", "Hotknife", 
+	"Trailer 1", "Previon", "Coach", "Cabbie", "Stallion", "Rumpo", "RC Bandit", "Romero", "Packer", "Monster", "Admiral", "Squalo", 
+	"Seasparrow", "Pizzaboy", "Tram", "Trailer 2", "Turismo", "Speeder", "Reefer", "Tropic", "Flatbed", "Yankee", "Caddy", "Solair", 
+	"Berkley's RC Van", "Skimmer", "PCJ-600", "Faggio", "Freeway", "RC Baron", "RC Raider", "Glendale", "Oceanic", "Sanchez", "Sparrow", "Patriot", 
+	"Quadbike", "Coastguard", "Dinghy", "Hermes", "Sabre", "Rustler", "ZR-350", "Walton", "Regina", "Comet", "BMX", "Burrito", "Camper", "Marquis", 
+	"Baggage", "Dozer", "Maverick", "News Chopper", "Rancher", "FBI Rancher", "Virgo", "Greenwood", "Jetmax", "Hotring Racer", "Sandking", 
+	"Blista Compact", "Police Maverick", "Boxville", "Benson", "Mesa", "RC Goblin", "Hotring Racer 2", "Hotring Racer 3", "Bloodring Banger", 
+	"Rancher Lure", "Super GT", "Elegant", "Journey", "Bike", "Mountain Bike", "Beagle", "Cropduster", "Stuntplane", "Tanker", "Roadtrain", "Nebula", 
+	"Majestic", "Buccaneer", "Shamal", "Hydra", "FCR-900", "NRG-500", "HPV1000", "Cement Truck", "Towtruck", "Fortune", "Cadrona", "FBI Truck", 
+	"Willard", "Forklift", "Tractor", "Combine Harvester", "Feltzer", "Remington", "Slamvan", "Blade", "Freight", "Brown Streak", "Vortex", "Vincent", 
+	"Bullet", "Clover", "Sadler", "Fire Truck Ladder", "Hustler", "Intruder", "Primo", "Cargobob", "Tampa", "Sunrise", "Merit", "Utility Van", 
+	"Nevada", "Yosemite", "Windsor", "Monster 2", "Monster 3", "Uranus", "Jester", "Sultan", "Stratum", "Elegy", "Raindance", "RC Tiger", "Flash", 
+	"Tahoma", "Savanna", "Bandito", "Freight Train Flatbed", "Streak Train Trailer", "Kart", "Mower", "Dune", "Sweeper", "Broadway", "Tornado", 
+	"AT-400", "DFT-30", "Huntley", "Stafford", "BF-400", "Newsvan", "Tug", "Trailer (Tanker Commando)", "Emperor", "Wayfarer", "Euros", "Hotdog", 
+	"Club", "Box Freight", "Trailer 3", "Andromada", "Dodo", "RC Cam", "Launch", "Police LS", "Police SF", "Police LV", "Police Ranger", 
+	"Picador", "S.W.A.T.", "Alpha", "Phoenix", "Glendale Damaged", "Sadler Damaged", "Baggage Trailer (covered)", 
+	"Baggage Trailer (Uncovered)", "Trailer (Stairs)", "Boxville Mission", "Farm Trailer", "Street Clean Trailer"}
 
 local settings = {
 	main = {
@@ -39,7 +42,8 @@ local settings = {
 		deathmessages = true,
 		nearbyplayers = true,
 		holdkey = false,
-		fpsvisible = true
+		fpsvisible = true,
+		cwtg_kill = false
 	}
 }
 
@@ -50,6 +54,7 @@ local deathmessages = settings.main.deathmessages
 local nearbyplayers = settings.main.nearbyplayers
 local holdkey = settings.main.holdkey
 local fpsvisible = settings.main.fpsvisible
+local cwtg_kill = settings.main.cwtg_kill
 
 settings = inicfg.load(settings)
 
@@ -69,6 +74,7 @@ function main()
 	sampRegisterChatCommand("toggledeathmessages", func_toggledeathmessages)
 	sampRegisterChatCommand("togglenearbyplayers", func_togglenearbyplayers)
 	sampRegisterChatCommand("togglefps", func_togglefps)
+	sampRegisterChatCommand("togglecwkills", func_cwtg_kill)
 
 	local ip, port = sampGetCurrentServerAddress()
 
@@ -91,9 +97,14 @@ function main()
 	wait(-1)
 end
 
+function func_cwtg_kill(arg)
+	settings.main.cwtg_kill = not settings.main.cwtg_kill
+	sampAddChatMessage("print kill style " .. (settings.main.cwtg_kill and "cwtg" or "uifui"), 0xFFFFFFFF)
+end
+
 function func_togglef10(arg)
-	holdkey = not holdkey
-	setVirtualKeyDown(vk.VK_F10, holdkey)
+	settings.main.holdkey = not settings.main.holdkey
+	setVirtualKeyDown(vk.VK_F10, settings.main.holdkey)
 end
 
 function func_toggletd(arg)
@@ -170,6 +181,16 @@ local scoretextc = " "
 
 local ptptime = "00:00"
 
+function playHitSound()
+	local bs = raknetNewBitStream()
+	raknetBitStreamWriteInt32(bs, 17802)
+	raknetBitStreamWriteFloat(bs, 0)
+	raknetBitStreamWriteFloat(bs, 0)
+	raknetBitStreamWriteFloat(bs, 0)
+	raknetEmulRpcReceiveBitStream(16, bs)
+	raknetDeleteBitStream(bs)
+end
+
 function sampev.onTextDrawSetString(id, text)
 	print("TEXTDRAW: ID: " .. id .." TEXT: ".. text)
 
@@ -226,6 +247,7 @@ function sampev.onTextDrawSetString(id, text)
 	if killtextdraw then
 		local player, dmg = string.match(text, "~g~(.*)~n~~w~(.*) ")
     	if player ~= nil and dmg ~= nil then
+			playHitSound()
 			addDamage(player,dmg)
     	end
 		return false
@@ -244,6 +266,7 @@ function sampev.onShowTextDraw(textdrawId, data)
 	if settings.main.killtextdraw then
 		local player, dmg = string.match(data.text, "~g~(.*)~n~~w~(.*) ")
     	if player ~= nil and dmg ~= nil and player ~= "President" then
+			playHitSound()
 			addDamage(player,dmg)
     	end
 		return false
@@ -252,6 +275,8 @@ end
 
 local fetchinfo = false
 function sampev.onShowDialog(dialogId, style, title, button1, button2, text)
+	print("DIALOG: ID: " .. dialogId .." TEXT: ".. text)
+	
 	if fetchinfo then
 		local str = text
 		str = string.gsub(str, "Zone Name:", "Zone:")
@@ -268,12 +293,18 @@ function sampev.onShowDialog(dialogId, style, title, button1, button2, text)
 	end
 end
 
+function sampev.onCreate3DText(id, color, position, distance, testLOS, attachedplayer, attachedvehicle, text)
+	print("3D TEXT LABEL: ID: " .. id .." TEXT: ".. text)
+end
+
 function sampev.onPlayerDeathNotification(killerid, killedid, reason)
 	local result, id = sampGetPlayerIdByCharHandle(PLAYER_PED)
 	if result then
 		if id == killerid and killedid then
 			local name = sampGetPlayerNickname(killedid)
-			setKillText("You killed " .. name)
+			if settings.main.cwtg_kill then printStyledString("~w~" .. name, 2000, 2)
+			else setKillText("You killed " .. name) end
+			--playHitSound()
 		end
 		if id == killedid and killerid then
 			local name = sampGetPlayerNickname(killerid)
