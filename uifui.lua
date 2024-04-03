@@ -11,7 +11,7 @@ local vk     = require "vkeys"
 local memory = require "memory"
 local inicfg = require 'inicfg'
 
-local uifuiversion = "2.4"
+local uifuiversion = "2.4.1"
 local versiontext = "UIF UI " .. uifuiversion .. " - Vektor, TwisT3R - github.com/firingsquadclan/uifui"
 
 local carnames = {"Landstalker", "Bravura", "Buffalo", "Linerunner", "Perennial", "Sentinel", "Dumper", "Fire Truck", "Trashmaster", "Stretch", "Manana", 
@@ -194,7 +194,7 @@ end
 function sampev.onTextDrawSetString(id, text)
 	print("TEXTDRAW: ID: " .. id .." TEXT: ".. text)
 
-	if string.find(text, "  ~g~Duel Score ~w~") or string.find(text, " ~g~PTP Level ~w~") then
+	if string.find(text, "~g~Duel ~w~") or string.find(text, "~g~PTP Level ~w~") then
 		text = text:gsub('~g~', '')
 		text = text:gsub('~n~', '  ')
 		text = text:gsub(' ~w~', ': ')
@@ -203,6 +203,8 @@ function sampev.onTextDrawSetString(id, text)
 		scoretextc = text
 		return false
 	end
+	
+	if id == 57 then return true end
 
 	--GZ GWAR
 
