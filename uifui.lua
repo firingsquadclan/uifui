@@ -10,7 +10,7 @@ local ev     = require "lib.samp.events.core"
 local vk     = require "vkeys"
 local memory = require "memory"
 local inicfg = require 'inicfg'
-
+
 local uifuiversion = "2.4.4"
 local versiontext = "UIF UI " .. uifuiversion .. " - Vektor, TwisT3R - github.com/firingsquadclan/uifui"
 
