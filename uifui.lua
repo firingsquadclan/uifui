@@ -11,7 +11,7 @@ local vk     = require "vkeys"
 local memory = require "memory"
 local inicfg = require 'inicfg'
 
-local uifuiversion = "2.4.1"
+local uifuiversion = "2.4.2"
 local versiontext = "UIF UI " .. uifuiversion .. " - Vektor, TwisT3R - github.com/firingsquadclan/uifui"
 
 local carnames = {"Landstalker", "Bravura", "Buffalo", "Linerunner", "Perennial", "Sentinel", "Dumper", "Fire Truck", "Trashmaster", "Stretch", "Manana", 
@@ -264,7 +264,7 @@ function sampev.onShowTextDraw(textdrawId, data)
 	end
 	
 	if textdrawId >= 2050 and textdrawId <= 2075 then return true end
-	if textdrawId >= 50 and textdrawId <= 100 then return true end
+	if textdrawId >= 50 and textdrawId <= 200 then return true end
 
 	if settings.main.killtextdraw then
 		local player, dmg = string.match(data.text, "~g~(.*)~n~~w~(.*) ")
