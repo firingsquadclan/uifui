@@ -264,10 +264,10 @@ function sampev.onShowTextDraw(textdrawId, data)
 	end
 	
 	if
-		textdrawId >= 2050 and textdrawId <= 2075
-		and textdrawId >= 50 and textdrawId <= 59
-		and textdrawId >= 61 and textdrawId <= 74
-		and textdrawId >= 76 and textdrawId <= 250
+		textdrawId >= 50 and textdrawId <= 59
+		or textdrawId >= 61 and textdrawId <= 74
+		or textdrawId >= 76 and textdrawId <= 250
+		or textdrawId >= 2050 and textdrawId <= 2075
 	then return true end
 
 	if settings.main.killtextdraw then
