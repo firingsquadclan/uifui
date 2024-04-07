@@ -264,10 +264,10 @@ function sampev.onShowTextDraw(textdrawId, data)
 	end
 	
 	if
-		textdrawId >= 50 and textdrawId <= 59
+		textdrawId >= 50 and textdrawId <= 58
 		or textdrawId >= 61 and textdrawId <= 74
-		or textdrawId >= 76 and textdrawId <= 250
-		or textdrawId >= 2050 and textdrawId <= 2075
+		or textdrawId >= 76 and textdrawId <= 300 -- gz scoreboard
+		or textdrawId >= 2050 and textdrawId <= 2075 -- vehicle list
 	then return true end
 
 	if settings.main.killtextdraw then

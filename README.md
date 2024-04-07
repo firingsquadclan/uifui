@@ -1,4 +1,4 @@
-# UIFUI 2.4.4
+# UIFUI 2.4.X
 ## Requirements
 - Moonloader
 - SAMP.Lua
