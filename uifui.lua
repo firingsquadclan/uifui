@@ -11,7 +11,7 @@ local vk     = require "vkeys"
 local memory = require "memory"
 local inicfg = require 'inicfg'
 
-local uifuiversion = "2.4.4"
+local uifuiversion = "2.4.5"
 local versiontext = "UIF UI " .. uifuiversion .. " - Vektor, TwisT3R - github.com/firingsquadclan/uifui"
 
 local carnames = {"Landstalker", "Bravura", "Buffalo", "Linerunner", "Perennial", "Sentinel", "Dumper", "Fire Truck", "Trashmaster", "Stretch", "Manana", 
@@ -259,16 +259,33 @@ end
 function sampev.onShowTextDraw(textdrawId, data)
 	print("TEXTDRAWSHOW: ID: " .. textdrawId .." TEXT: ".. data.text)
 
-	if data.text == "SELECT" or data.text == "LD_BEAT:right" or data.text == "LD_BEAT:left" or data.text == "Terrorists" or data.text == "Police" or data.text == "FBI" or data.text == "Robbers" or data.text == "Cops" then
+	--[[if data.text == "SELECT" or data.text == "LD_BEAT:right" or data.text == "LD_BEAT:left" or data.text == "Terrorists" or data.text == "Police" or data.text == "FBI" or data.text == "Robbers" or data.text == "Cops" then
 		return true
-	end
+	end]]
+	
+	--GZ
+	
+	local s1, s2, time = string.match(data.text, "~r~~h~(.*)~w~[+-]~b~~h~(.*) ~n~~w~(.*)") -- gz attacker td 
+	if s1 and s2 and time then return false end
+	
+	local s1, s2, time = string.match(data.text, "~b~~h~(.*)~w~[+-]~r~~h~(.*) ~n~~w~(.*)") -- gz defender td
+	if s1 and s2 and time then return false end
+
+	--DERBY
+
+	local s1, s2, time = string.match(data.text, "~r~~h~(.*)~w~[+-]~b~~h~(.*) ~n~(.*)") -- derby attacker td
+	if s1 and s2 and time then return false end
+
+	local s1, s2, time = string.match(data.text, "~b~~h~(.*)~w~[+-]~r~~h~(.*) ~n~(.*)") -- derby defender td
+	if s1 and s2 and time then return false end
 	
 	if
-		textdrawId >= 50 and textdrawId <= 58
-		or textdrawId >= 61 and textdrawId <= 74
-		or textdrawId >= 76 and textdrawId <= 300 -- gz scoreboard
-		or textdrawId >= 2050 and textdrawId <= 2075 -- vehicle list
-	then return true end
+		textdrawId >= 50 and textdrawId <= 300 --gz scoreboard
+		or textdrawId >= 2051 and textdrawId <= 2076 --vehicle list
+		then return true
+		elseif data.text == "SELECT" or data.text == "LD_BEAT:right" or data.text == "LD_BEAT:left" or data.text == "Terrorists" or data.text == "Police" or data.text == "FBI" or data.text == "Robbers" or data.text == "Cops" then return true 
+		else return false
+	end
 
 	if settings.main.killtextdraw then
 		local player, dmg = string.match(data.text, "~g~(.*)~n~~w~(.*) ")
