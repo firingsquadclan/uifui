@@ -1,4 +1,4 @@
-# UIFUI 2.6
+# UIFUI 3
 ## Requirements
 - Moonloader
 - SAMP.Lua
@@ -20,6 +20,7 @@
 - local vk     = require "vkeys"
 - local memory = require "memory"
 - local inicfg = require 'inicfg'
+- local imgui  = require 'imgui'
 
 Example image:
 ![sa-mp-046](https://user-images.githubusercontent.com/10908255/160299456-5324bd57-4875-44cf-9f75-1cfea48c1598.png)
