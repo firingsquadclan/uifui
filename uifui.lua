@@ -500,8 +500,9 @@ function sampev.onShowTextDraw(textdrawId, data)
 	end
 
 	if textdrawId == 2051 or textdrawId == 2052 then
-		text = string.gsub(data.text, "~.-~", "")
-		notificationText = text
+		local processedText = string.gsub(data.text, "~[nN]~", " ")
+		local tdtext = string.gsub(processedText, "~.-~", "")
+		notificationText = tdtext
 		return false
 	end
 
