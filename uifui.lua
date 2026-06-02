@@ -12,8 +12,8 @@ local memory = require "memory"
 local inicfg = require 'inicfg'
 local imgui  = require 'imgui' -- Added ImGui library
 
-local uifuiversion = "2.6"
-local versiontext = "UIF UI " .. uifuiversion .. " - Vektor, TwisT3R,TweaK - github.com/firingsquadclan/uifui"
+local uifuiversion = "3"
+local versiontext = "UIF UI " .. uifuiversion .. " - Vektor, TwisT3R, TweaK - github.com/firingsquadclan/uifui"
 
 local carnames = {"Landstalker", "Bravura", "Buffalo", "Linerunner", "Perennial", "Sentinel", "Dumper", "Fire Truck", "Trashmaster", "Stretch", "Manana", 
 	"Infernus", "Voodoo", "Pony", "Mule", "Cheetah", "Ambulance", "Leviathan", "Moonbeam", "Esperanto", "Taxi", "Washington", "Bobcat", 
@@ -858,7 +858,7 @@ function renderNotification()
 					elseif am ~= 0 and hp <= 100 and hp ~= 0 then string = name.. "(" .. id .. ")" .. " - " .."(" .. hp .. " - " .. am .. ")"
 					else string = name.. "(" .. id .. ")" .. " - " .. "(" .. state .. ")" end
 					local length = renderGetFontDrawTextLength(font, string)
-					local clr = sampGetPlayerColor(id)
+					--local clr = sampGetPlayerColor(id)
 					local updated_color = bit.bor(bit.band(sampGetPlayerColor(id), 0x00ffffff), 0xFF000000)
 					if settings.main.nearbyplayers then renderText(font, string, (resX-length-4), (resY-height-2)-(p*height)-2, updated_color) end
 					p = p+1
@@ -896,7 +896,7 @@ function renderNotification()
 					elseif am ~= 0 and hp <= 100 and hp ~= 0 then string = name.. "(" .. id .. ")" .. " - " .."(" .. hp .. " - " .. am .. ")"
 					else string = name.. "(" .. id .. ")" .. " - " .. "(" .. state .. ")" end
 					local length = renderGetFontDrawTextLength(font, string)
-					local clr = sampGetPlayerColor(id)
+					--local clr = sampGetPlayerColor(id)
 					local updated_color = bit.bor(bit.band(sampGetPlayerColor(id), 0x00ffffff), 0xFF000000)
 					if settings.main.nearbyplayers then renderText(font, string, (resX-length-4), (resY-height-2)-(p*height)-2, updated_color) end
 					p = p+1
