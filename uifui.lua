@@ -43,6 +43,7 @@ local settings = {
 		nearbyplayers = true,
 		holdkey = false,
 		fpsvisible = true,
+		pingvisible = true,
 		cwtg_kill = false
 	}
 }
@@ -60,6 +61,7 @@ settings = inicfg.load(settings)
 
 local font = nil
 local fps = {cur = 0, tick = 0}
+local ping = 0
 
 function main()
 
@@ -74,6 +76,7 @@ function main()
 	sampRegisterChatCommand("toggledeathmessages", func_toggledeathmessages)
 	sampRegisterChatCommand("togglenearbyplayers", func_togglenearbyplayers)
 	sampRegisterChatCommand("togglefps", func_togglefps)
+	sampRegisterChatCommand("toggleping", func_toggleping)
 	sampRegisterChatCommand("togglecwkills", func_cwtg_kill)
 
 	local ip, port = sampGetCurrentServerAddress()
@@ -90,6 +93,8 @@ function main()
 		local time = os.clock() * 1000
 		if time - fps.tick > 1000 then
 			fps.cur = memory.getfloat(0xB7CB50, 4, false)
+			local result, id = sampGetPlayerIdByCharHandle(PLAYER_PED)
+			if result then ping = sampGetPlayerPing(id) end
 			fps.tick = os.clock() * 1000
 		end
 	end
@@ -135,6 +140,11 @@ end
 function func_togglefps(arg)
 	settings.main.fpsvisible = not settings.main.fpsvisible
 	sampAddChatMessage("fps " .. (settings.main.fpsvisible and "visible" or "invisible"), 0xFFFFFFFF)
+end
+
+function func_toggleping(arg)
+	settings.main.pingvisible = not settings.main.pingvisible
+	sampAddChatMessage("ping " .. (settings.main.pingvisible and "visible" or "invisible"), 0xFFFFFFFF)
 end
 
 local notificationText = versiontext
@@ -444,13 +454,21 @@ function renderNotification()
 		local scorelen = renderGetFontDrawTextLength(font, scoretext)
 		renderText(font, scoretext, resX - scorelen - 5, 5)
 
-		local fpstext = "FPS: " .. round(fps.cur)
-		local fpslen = renderGetFontDrawTextLength(font, fpstext)
 		local altertext = 0
+		if scoretext == scoretextc then altertext = 25
+		elseif scoretext == "" then altertext = 5 end
+
 		if settings.main.fpsvisible then
-			if scoretext == scoretextc then altertext = 25
-			elseif scoretext == "" then altertext = 5 end
+			local fpstext = "FPS: " .. round(fps.cur)
+			local fpslen = renderGetFontDrawTextLength(font, fpstext)
 			renderText(font, fpstext, resX - fpslen - 5, altertext)
+		end
+
+		if settings.main.pingvisible then
+			local pingtext = "Ping: " .. ping
+			local pinglen = renderGetFontDrawTextLength(font, pingtext)
+			local pingy = altertext + (settings.main.fpsvisible and height or 0)
+			renderText(font, pingtext, resX - pinglen - 5, pingy)
 		end
 
 		local peds = getAllChars()
