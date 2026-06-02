@@ -831,7 +831,7 @@ function renderNotification()
 		for i=1, #peds do
 			local result, id = sampGetPlayerIdByCharHandle(peds[i])
 			if result then
-				local result, pid = sampGetPlayerIdByCharHandle(playerPed)
+				--local result, pid = sampGetPlayerIdByCharHandle(playerPed)
 				if sampGetPlayerColor(pid) ~= sampGetPlayerColor(id) then
 					local name = sampGetPlayerNickname(id)
 					local hp = sampGetPlayerHealth(id)
@@ -848,7 +848,7 @@ function renderNotification()
                     if isCharInAnyCar(peds[i]) then
                         local car = storeCarCharIsInNoSave(peds[i])
                         local carhp = getCarHealth(car)
-						local result1, carid = sampGetVehicleIdByCarHandle(car)
+						--local result1, carid = sampGetVehicleIdByCarHandle(car)
 						local carmodel = getCarModel(car)
 						local carname = carnames[carmodel - 399]
 						if carhp > 9999 then state = "GOD"
@@ -869,7 +869,7 @@ function renderNotification()
 		for i=1, #peds do
 			local result, id = sampGetPlayerIdByCharHandle(peds[i])
 			if result then
-				local result, pid = sampGetPlayerIdByCharHandle(playerPed)
+				--local result, pid = sampGetPlayerIdByCharHandle(playerPed)
 				if sampGetPlayerColor(pid) == sampGetPlayerColor(id) then
 					local name = sampGetPlayerNickname(id)
 					local hp = sampGetPlayerHealth(id)
