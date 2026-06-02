@@ -87,6 +87,19 @@ local font = nil
 local fps = {cur = 0, tick = 0}
 local ping = 0
 
+-- DM scoreboard. The server draws its end-of-match scoreboard as raw textdraws
+-- (block 60-130). We capture those cells here, hide the native textdraws, and
+-- redraw them as a themed panel (drawDmScoreboard) matching the settings window.
+local dmScore = { time = 0, titleId = nil, title = "", cells = {} }
+local DM_SCORE_DURATION = 15 -- seconds to keep the panel up after the last update
+
+-- The server draws Deathmatch, Duel and Zone War end scoreboards as the same kind
+-- of textdraw block (title, headers, then a row of cells per player). They differ
+-- only in column count, so we anchor on any of these titles and render generically.
+local function isScoreboardTitle(text)
+	return text:find("^Deathmatch %- ") or text:find("^Zone War %- ") or text:find("^Duel %- ")
+end
+
 function main()
 
 	if not isSampLoaded() or not isSampfuncsLoaded() then error("SA:MP and SAMPFUNCS required!") end
@@ -381,6 +394,21 @@ end
 function sampev.onTextDrawSetString(id, text)
 	print("TEXTDRAW: ID: " .. id .." TEXT: ".. text)
 
+	-- Live updates to the DM scoreboard cells (anchored on the title text; see
+	-- onShowTextDraw / drawDmScoreboard).
+	if isScoreboardTitle(text) then
+		dmScore.titleId = id
+		dmScore.title = text
+		dmScore.time = os.clock()
+		return false
+	end
+	if dmScore.titleId and id >= dmScore.titleId and id <= dmScore.titleId + 500
+		and os.clock() - dmScore.time < 2 then
+		dmScore.cells[id] = text
+		dmScore.time = os.clock()
+		return false
+	end
+
 	if string.find(text, "~g~Duel ~w~") or string.find(text, "~g~PTP Level ~w~") then
 		text = text:gsub('~g~', '')
 		text = text:gsub('~n~', '  ')
@@ -429,6 +457,9 @@ function sampev.onTextDrawSetString(id, text)
 		return false
 	end
 
+	-- /v vehicle menu: let its cell text updates through too.
+	if id >= 2053 and id <= 2076 then return end
+
 	if settings.main.killtextdraw then -- updated variable pointer path
 		local player, dmg = string.match(text, "~g~(.*)~n~~w~(.*) ")
     	if player ~= nil and dmg ~= nil then
@@ -458,6 +489,16 @@ function sampev.onShowTextDraw(textdrawId, data)
 	local s1, s2, time = string.match(data.text, "~b~~h~(.*)~w~[+-]~r~~h~(.*) ~n~(.*)") 
 	if s1 and s2 and time then return false end
 	
+	-- Native stats bar (PlayTime / FR / DM ...). onTextDrawSetString reformats it
+	-- into the top-right scoretext, so hide the native textdraw's show too --
+	-- otherwise the green server bar draws on top of our version.
+	if string.find(data.text, "~g~Duel ~w~") or string.find(data.text, "~g~PTP Level ~w~") then
+		local t = data.text:gsub('~g~', ''):gsub('~n~', '  '):gsub(' ~w~', ': ')
+		scoretext = t
+		scoretextc = t
+		return false
+	end
+
 	if textdrawId == 2051 or textdrawId == 2052 then
 		text = string.gsub(data.text, "~.-~", "")
 		notificationText = text
@@ -472,6 +513,40 @@ function sampev.onShowTextDraw(textdrawId, data)
 		else return false
 	end]]
 
+	-- Deathmatch / Duel / Zone War scoreboards. The server's textdraw IDs are
+	-- assigned dynamically, so anchor on the title text rather than fixed IDs.
+	-- Layout relative to the title at id T:
+	--   LD_SPAC:white background bar(s) near T
+	--   T   = "<mode> - <subtitle>"  (isScoreboardTitle)
+	--   T+1 = empty,  T+2.. = column headers (Name, Kills, [Assists, Deaths, Dmg])
+	--   then the rank "1" begins the per-player rows (one cell per column)
+	-- We capture the cells, hide the native textdraws, and redraw a themed panel
+	-- (drawDmScoreboard). LD_SPAC:white is only ever these scoreboards' bg bars.
+	if data.text == "LD_SPAC:white" then
+		dmScore.time = os.clock()
+		return false
+	end
+	if isScoreboardTitle(data.text) then
+		dmScore.titleId = textdrawId
+		dmScore.title = data.text
+		dmScore.cells = {}
+		dmScore.time = os.clock()
+		return false
+	end
+	if dmScore.titleId and textdrawId > dmScore.titleId
+		and textdrawId <= dmScore.titleId + 500
+		and os.clock() - dmScore.time < 2 then
+		dmScore.cells[textdrawId] = data.text
+		dmScore.time = os.clock()
+		return false
+	end
+
+	-- /v vehicle menu (grid boxes, labels, arrows, hints): always let it show.
+	if textdrawId >= 2053 and textdrawId <= 2076 then return end
+
+	-- "Disable Damage Textdraws" doubles as a minimal-UI toggle: when on, hide all
+	-- remaining server textdraws (uifserver.net, "press N", round timers, etc.),
+	-- capturing damage numbers for the damage bar on the way out.
 	if settings.main.killtextdraw then
 		local player, dmg = string.match(data.text, "~g~(.*)~n~~w~(.*) ")
     	if player ~= nil and dmg ~= nil and player ~= "President" then
@@ -579,6 +654,117 @@ function renderKillText()
 	end
 end
 
+-- Themed redraw of the captured scoreboard (Deathmatch / Duel / Zone War). Column
+-- count varies by mode, so it's derived from the data rather than hardcoded: after
+-- the title (T) and an empty cell (T+1) come the column headers (Name, Kills, and
+-- for Zone War also Assists/Deaths/Dmg), then the rank "1" begins the rows. Each
+-- player is one cell per column (rank + each header). Widths auto-size to content.
+-- Drawn with plain renderDrawBox + shadowed renderText (no renderDrawBoxWithBorder,
+-- which crashed the game).
+function drawDmScoreboard()
+	if not dmScore.titleId or not font then return end
+	if os.clock() - dmScore.time > DM_SCORE_DURATION then return end
+
+	local cells   = dmScore.cells
+	local titleId = dmScore.titleId
+
+	-- Present cells after the title, in ID order (handles the server's ID gaps).
+	local ids = {}
+	for id in pairs(cells) do
+		if id > titleId then ids[#ids + 1] = id end
+	end
+	table.sort(ids)
+
+	-- Headers run from T+2 until the first all-digit cell (the rank "1"). The rank
+	-- column has no header of its own, so prepend "#".
+	local headers = {"#"}
+	local dataStart
+	for _, id in ipairs(ids) do
+		if not dataStart and id >= titleId + 2 then
+			if cells[id]:match("^%d+$") then dataStart = id
+			elseif cells[id] ~= "" then headers[#headers + 1] = cells[id] end
+		end
+	end
+	local numCols = #headers
+
+	-- Group the data cells into rows of numCols.
+	local rows = {}
+	if dataStart then
+		local n = 0
+		for _, id in ipairs(ids) do
+			if id >= dataStart then
+				if n % numCols == 0 then rows[#rows + 1] = {} end
+				local row = rows[#rows]
+				row[#row + 1] = cells[id]
+				n = n + 1
+			end
+		end
+	end
+
+	local title = dmScore.title or "Scoreboard"
+
+	-- Local player's nickname, to highlight their row (name is column 2).
+	local myname
+	local res, myid = sampGetPlayerIdByCharHandle(PLAYER_PED)
+	if res then myname = sampGetPlayerNickname(myid) end
+
+	local accent = settings.main.textcolor or 0xFFFFFFFF
+	local dim    = 0xFFB0B0B0
+	local lineH  = renderGetFontDrawHeight(font)
+
+	-- Per-column widths (max of header + all values), then x-offsets.
+	local colW = {}
+	for c = 1, numCols do colW[c] = renderGetFontDrawTextLength(font, headers[c]) end
+	for _, row in ipairs(rows) do
+		for c = 1, numCols do
+			local w = renderGetFontDrawTextLength(font, row[c] or "")
+			if w > colW[c] then colW[c] = w end
+		end
+	end
+	local colPad = 14
+	local colX, cx = {}, 0
+	for c = 1, numCols do
+		colX[c] = cx
+		cx = cx + colW[c] + colPad
+	end
+	local contentW = cx - colPad
+	local titleW = renderGetFontDrawTextLength(font, title)
+	if titleW > contentW then contentW = titleW end
+
+	local pad  = 10
+	local boxW = contentW + pad * 2
+	local boxH = pad * 2 + lineH + 4 + 3 + lineH + 2 + (#rows * lineH)
+
+	local resX, resY = getScreenResolution()
+	local boxX = resX / 2 - boxW / 2
+	local boxY = resY * 0.13
+
+	-- Filled panel background + a thin accent strip up top (both plain boxes).
+	renderDrawBox(boxX, boxY, boxW, boxH, 0xDC0E0F12)
+	renderDrawBox(boxX, boxY, boxW, 2, accent)
+
+	local x = boxX + pad
+	local y = boxY + pad
+
+	renderText(font, title, x, y, accent)
+	y = y + lineH + 4
+	renderDrawBox(x, y, contentW, 1, dim) -- header underline
+	y = y + 3
+
+	for c = 1, numCols do
+		renderText(font, headers[c], x + colX[c], y, dim)
+	end
+	y = y + lineH + 2
+
+	for _, row in ipairs(rows) do
+		local clr = (myname and row[2] == myname) and accent or 0xFFFFFFFF
+		for c = 1, numCols do
+			renderText(font, row[c] or "", x + colX[c], y, clr)
+		end
+		y = y + lineH
+	end
+end
+
 function isPlayerNear(p1, p2)
 	local peds = getAllChars()
 	for i=1, #peds do
@@ -614,7 +800,8 @@ function renderNotification()
 	while true do
 		drawDamageBar()
 		renderKillText()
-		
+		drawDmScoreboard()
+
 		local height = renderGetFontDrawHeight(font)
 		renderText(font, notificationText, 5, (resY - height - 4))
 
