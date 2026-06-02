@@ -1,4 +1,4 @@
-# UIFUI 2.5
+# UIFUI 2.6
 ## Requirements
 - Moonloader
 - SAMP.Lua
@@ -11,6 +11,7 @@
 - Moves all generic gametexts/textdraw messages from the middle of the screen to the bottom left corner
 - Scores textdraw reworked
 - Shows the name of the players near you with additional info like HP/ARMOUR/GOD
+- Color changer: pick a custom color in the `/uifui` menu that recolors both the overlay text and the ImGui accent/highlights
 
 ## Required Libraries
 - local sampev = require "lib.samp.events"
