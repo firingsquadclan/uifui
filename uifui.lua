@@ -45,6 +45,7 @@ local settings = {
 		holdkey = false,
 		fpsvisible = true,
 		pingvisible = true,
+		packetlossvisible = true,
 		cwtg_kill = false,
 		textcolor = 0xFFFFFFFF
 	}
@@ -64,6 +65,7 @@ local im_nearbyplayers = imgui.ImBool(settings.main.nearbyplayers)
 local im_holdkey = imgui.ImBool(settings.main.holdkey)
 local im_fpsvisible = imgui.ImBool(settings.main.fpsvisible)
 local im_pingvisible = imgui.ImBool(settings.main.pingvisible)
+local im_packetlossvisible = imgui.ImBool(settings.main.packetlossvisible)
 local im_cwtg_kill = imgui.ImBool(settings.main.cwtg_kill)
 
 -- Overlay text color (ARGB 0xAARRGGBB). Arithmetic pack/unpack so the value
@@ -86,18 +88,50 @@ local im_textcolor = imgui.ImFloat3(_tr, _tg, _tb)
 local font = nil
 local fps = {cur = 0, tick = 0}
 local ping = 0
+local packetLoss = 0 -- last packet-loss reading, in percent (scraped from /pnetstats)
+
+-- Packet loss comes from the server's /pnetstats command. The earlier approach read
+-- RakNet's own GetStatistics() through the LuaJIT FFI, but on this SA:MP build that
+-- call always returned 0, so we drop it. Instead we poll /pnetstats on a timer (see
+-- the main loop), then scrape the "Packetloss: X%" line out of the reply dialog in
+-- onShowDialog and suppress the dialog so the player never sees the popup.
+--
+-- pnetPolling marks a /pnetstats request we sent ourselves, so onShowDialog only
+-- swallows our own auto-poll dialog and never one the player opened by hand. We only
+-- poll while the packet-loss overlay is switched on, to avoid sending the command
+-- (and getting the dialog) for no reason.
+local pnetPolling = false
+local pnetTick = 0
+local PNET_INTERVAL = 4000 -- ms between /pnetstats polls
 
 -- DM scoreboard. The server draws its end-of-match scoreboard as raw textdraws
 -- (block 60-130). We capture those cells here, hide the native textdraws, and
 -- redraw them as a themed panel (drawDmScoreboard) matching the settings window.
-local dmScore = { time = 0, titleId = nil, title = "", cells = {} }
+local dmScore = { time = 0, titleId = nil, title = "", cells = {}, colors = {} }
+
+-- The textdraw letterColor read off the wire arrives as ABGR (0xAABBGGRR), not
+-- RGBA: red is the low byte, blue the high-mid byte. renderFontDrawText wants ARGB
+-- (0xAARRGGBB). Reading it as RGBA swapped R and B, which turned the blue team
+-- yellow (red happened to survive). Convert and force full alpha so the team's
+-- blue/red name is solid.
+local function textdrawColorToArgb(abgr)
+	if not abgr then return nil end
+	local r = bit.band(abgr, 0xFF)
+	local g = bit.band(bit.rshift(abgr,  8), 0xFF)
+	local b = bit.band(bit.rshift(abgr, 16), 0xFF)
+	return bit.bor(0xFF000000, bit.lshift(r, 16), bit.lshift(g, 8), b)
+end
 local DM_SCORE_DURATION = 15 -- seconds to keep the panel up after the last update
 
--- The server draws Deathmatch, Duel and Zone War end scoreboards as the same kind
--- of textdraw block (title, headers, then a row of cells per player). They differ
--- only in column count, so we anchor on any of these titles and render generically.
+-- The server draws Deathmatch, Duel, Zone War and Group War end scoreboards as the
+-- same kind of textdraw block (title, headers, then a row of cells per player). They
+-- differ only in column count, so we anchor on any of these titles and render
+-- generically. "Group War - <clan> vs <clan>" is its own title (distinct from the
+-- solo "Zone War - <zone>" board); missing it left the stale prior title showing
+-- and only captured cells by luck off a leftover titleId.
 local function isScoreboardTitle(text)
-	return text:find("^Deathmatch %- ") or text:find("^Zone War %- ") or text:find("^Duel %- ")
+	return text:find("^Deathmatch %- ") or text:find("^Zone War %- ")
+		or text:find("^Duel %- ") or text:find("^Group War %- ")
 end
 
 function main()
@@ -131,6 +165,18 @@ function main()
 			local result, id = sampGetPlayerIdByCharHandle(PLAYER_PED)
 			if result then ping = sampGetPlayerPing(id) end
 			fps.tick = os.clock() * 1000
+		end
+
+		-- Refresh packet loss by polling /pnetstats; the reply dialog is scraped and
+		-- hidden in onShowDialog. Only poll while the overlay is on so we don't fire
+		-- the command for no reason, and never while a dialog is already open or our
+		-- hidden /pnetstats reply would replace whatever the player has up (shop,
+		-- menu, etc.).
+		if settings.main.packetlossvisible and not sampIsDialogActive()
+			and time - pnetTick > PNET_INTERVAL then
+			pnetTick = time
+			pnetPolling = true
+			sampSendChat("/pnetstats")
 		end
 	end
 
@@ -267,6 +313,11 @@ function imgui.OnDrawFrame()
 		if toggleSwitch("Show Ping Overlay", im_pingvisible) then
 			settings.main.pingvisible = im_pingvisible.v
 			sampAddChatMessage("ping " .. (settings.main.pingvisible and "visible" or "invisible"), 0xFFFFFFFF)
+		end
+
+		if toggleSwitch("Show Packet Loss Overlay", im_packetlossvisible) then
+			settings.main.packetlossvisible = im_packetlossvisible.v
+			sampAddChatMessage("packet loss " .. (settings.main.packetlossvisible and "visible" or "invisible"), 0xFFFFFFFF)
 		end
 
 		if toggleSwitch("CWTG Kill Print Style", im_cwtg_kill) then
@@ -531,6 +582,7 @@ function sampev.onShowTextDraw(textdrawId, data)
 		dmScore.titleId = textdrawId
 		dmScore.title = data.text
 		dmScore.cells = {}
+		dmScore.colors = {}
 		dmScore.time = os.clock()
 		return false
 	end
@@ -538,6 +590,10 @@ function sampev.onShowTextDraw(textdrawId, data)
 		and textdrawId <= dmScore.titleId + 500
 		and os.clock() - dmScore.time < 2 then
 		dmScore.cells[textdrawId] = data.text
+		-- Capture the textdraw's own letter color so blue/red teams survive the
+		-- redraw. Only onShowTextDraw carries it; live SetString updates keep the
+		-- last-known color (see onTextDrawSetString).
+		dmScore.colors[textdrawId] = data.letterColor
 		dmScore.time = os.clock()
 		return false
 	end
@@ -560,7 +616,19 @@ end
 local fetchinfo = false
 function sampev.onShowDialog(dialogId, style, title, button1, button2, text)
 	print("DIALOG: ID: " .. dialogId .." TEXT: ".. text)
-	
+
+	-- /pnetstats reply: pull "Packetloss: X%" out of the text. We always read the
+	-- value when the line is present, but only hide the dialog when it's one of our
+	-- own polls (pnetPolling) so a dialog the player opened by hand still shows.
+	local pl = string.match(text, "Packetloss:%s*([%d%.]+)%%")
+	if pl then
+		packetLoss = tonumber(pl) or packetLoss
+		if pnetPolling then
+			pnetPolling = false
+			return false
+		end
+	end
+
 	if fetchinfo then
 		local str = text
 		str = string.gsub(str, "Zone Name:", "Zone:")
@@ -688,15 +756,19 @@ function drawDmScoreboard()
 	end
 	local numCols = #headers
 
-	-- Group the data cells into rows of numCols.
+	-- Group the data cells into rows of numCols. rowColors[ri] holds the row's team
+	-- color, taken from the name cell's letter color (the blue/red the server uses).
 	local rows = {}
+	local rowColors = {}
 	if dataStart then
 		local n = 0
 		for _, id in ipairs(ids) do
 			if id >= dataStart then
-				if n % numCols == 0 then rows[#rows + 1] = {} end
+				local col = n % numCols
+				if col == 0 then rows[#rows + 1] = {}; rowColors[#rows] = nil end
 				local row = rows[#rows]
 				row[#row + 1] = cells[id]
+				if col == 1 then rowColors[#rows] = textdrawColorToArgb(dmScore.colors[id]) end
 				n = n + 1
 			end
 		end
@@ -722,7 +794,21 @@ function drawDmScoreboard()
 			if w > colW[c] then colW[c] = w end
 		end
 	end
-	local colPad = 14
+
+	-- A column is numeric when every value in it is digits (rank, Kills, Deaths,
+	-- Dmg, ...). Numeric columns get right-aligned so the digits line up under the
+	-- header instead of fanning out ragged-left (the messy Group War look, where
+	-- "9553" and "0" both started at the same x). The Name column stays left.
+	local numeric = {}
+	for c = 1, numCols do
+		numeric[c] = true
+		for _, row in ipairs(rows) do
+			local v = row[c]
+			if v and v ~= "" and not v:match("^%d+$") then numeric[c] = false break end
+		end
+	end
+
+	local colPad = 16
 	local colX, cx = {}, 0
 	for c = 1, numCols do
 		colX[c] = cx
@@ -747,20 +833,35 @@ function drawDmScoreboard()
 	local x = boxX + pad
 	local y = boxY + pad
 
+	-- Draw one cell. Numeric columns are right-aligned to their column's right edge
+	-- (colX[c] + colW[c]); text columns (Name) stay left-aligned at colX[c]. colW[c]
+	-- is the max width in the column, so right-aligned text never crosses into the
+	-- neighbouring column.
+	local function drawCell(text, c, yy, clr)
+		text = text or ""
+		local dx = x + colX[c]
+		if numeric[c] then dx = dx + colW[c] - renderGetFontDrawTextLength(font, text) end
+		renderText(font, text, dx, yy, clr)
+	end
+
 	renderText(font, title, x, y, accent)
 	y = y + lineH + 4
 	renderDrawBox(x, y, contentW, 1, dim) -- header underline
 	y = y + 3
 
 	for c = 1, numCols do
-		renderText(font, headers[c], x + colX[c], y, dim)
+		drawCell(headers[c], c, y, dim)
 	end
 	y = y + lineH + 2
 
-	for _, row in ipairs(rows) do
-		local clr = (myname and row[2] == myname) and accent or 0xFFFFFFFF
+	for ri = 1, #rows do
+		local row = rows[ri]
+		-- Team color (blue/red) for the row; fall back to white. The local player's
+		-- own row stays on the accent color so it's easy to spot.
+		local clr = rowColors[ri] or 0xFFFFFFFF
+		if myname and row[2] == myname then clr = accent end
 		for c = 1, numCols do
-			renderText(font, row[c] or "", x + colX[c], y, clr)
+			drawCell(row[c], c, y, clr)
 		end
 		y = y + lineH
 	end
@@ -826,12 +927,19 @@ function renderNotification()
 			renderText(font, pingtext, resX - pinglen - 5, pingy)
 		end
 
+		if settings.main.packetlossvisible then
+			local pltext = string.format("Packet Loss: %.1f%%", packetLoss)
+			local pllen = renderGetFontDrawTextLength(font, pltext)
+			local ply = altertext + (settings.main.fpsvisible and height or 0) + (settings.main.pingvisible and height or 0)
+			renderText(font, pltext, resX - pllen - 5, ply)
+		end
+
 		local peds = getAllChars()
 		local p = 0
 		for i=1, #peds do
 			local result, id = sampGetPlayerIdByCharHandle(peds[i])
 			if result then
-				--local result, pid = sampGetPlayerIdByCharHandle(playerPed)
+				local result, pid = sampGetPlayerIdByCharHandle(playerPed)
 				if sampGetPlayerColor(pid) ~= sampGetPlayerColor(id) then
 					local name = sampGetPlayerNickname(id)
 					local hp = sampGetPlayerHealth(id)
@@ -848,7 +956,7 @@ function renderNotification()
                     if isCharInAnyCar(peds[i]) then
                         local car = storeCarCharIsInNoSave(peds[i])
                         local carhp = getCarHealth(car)
-						--local result1, carid = sampGetVehicleIdByCarHandle(car)
+						local result1, carid = sampGetVehicleIdByCarHandle(car)
 						local carmodel = getCarModel(car)
 						local carname = carnames[carmodel - 399]
 						if carhp > 9999 then state = "GOD"
@@ -869,7 +977,7 @@ function renderNotification()
 		for i=1, #peds do
 			local result, id = sampGetPlayerIdByCharHandle(peds[i])
 			if result then
-				--local result, pid = sampGetPlayerIdByCharHandle(playerPed)
+				local result, pid = sampGetPlayerIdByCharHandle(playerPed)
 				if sampGetPlayerColor(pid) == sampGetPlayerColor(id) then
 					local name = sampGetPlayerNickname(id)
 					local hp = sampGetPlayerHealth(id)
